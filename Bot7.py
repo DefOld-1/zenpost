@@ -3,7 +3,7 @@ import random
 import time
 from telegram import Bot, InputFile
 
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"  # Замените на свой токен Telegram
+TOKEN = "6165593766:AAG5NqL3uaaURcIbce6sYHVn30rYcOhknWY"  # Замените на свой токен Telegram
 bot = Bot(token=TOKEN)
 
 # URL для запросов к Zen API
@@ -79,9 +79,9 @@ def publish_random_news():
         if news and channel:
             text, image = format_zen_post(news, channel)
             if image:
-                bot.send_photo(chat_id="YOUR_CHANNEL_ID", photo=InputFile(image), caption=text)
+                bot.send_photo(chat_id="1001365520775", photo=InputFile(image), caption=text)
             else:
-                bot.send_message(chat_id="YOUR_CHANNEL_ID", text=text)
+                bot.send_message(chat_id="1001365520775", text=text)
         time.sleep(3600)  # Подождите 1 час
 
 if __name__ == "__main__":
