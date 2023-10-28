@@ -1,6 +1,6 @@
 import requests
 import random
-import time
+import asyncio
 from telegram import Bot, InputFile
 
 TOKEN = "6165593766:AAG5NqL3uaaURcIbce6sYHVn30rYcOhknWY"  # Замените на свой токен Telegram
@@ -16,7 +16,7 @@ channels = ["popsci", "nplus1", "naukatv", "scfh", "uralscience", "nakedscience"
 news_list = []
 
 # Функция для получения постов Zen по имени канала
-def get_zen_posts(channel):
+async def get_zen_posts(channel):
     # Подготовьте параметры запроса
     params = {
         "clid": 300,
@@ -52,9 +52,9 @@ def format_zen_post(post, channel):
     return text1, image
 
 # Функция для получения последних 10 новостей из каждого канала и добавления их в список новостей
-def update_news_list():
+async def update_news_list():
     for channel in channels:
-        posts = get_zen_posts(channel)
+        posts = await get_zen_posts(channel)
         if posts:
             latest_posts = posts[:10]  # Получите последние 10 постов
             for post in latest_posts:
@@ -72,17 +72,18 @@ def get_random_news():
         return None, None
 
 # Функция для публикации случайных новостей
-def publish_random_news():
+async def publish_random_news():
     while True:
-        update_news_list()  # Обновите список новостей
+        await update_news_list()  # Обновите список новостей
         news, channel = get_random_news()
         if news and channel:
             text, image = format_zen_post(news, channel)
             if image:
-                bot.send_photo(chat_id="1001365520775", photo=InputFile(image), caption=text)
+                await bot.send_photo(chat_id="1001365520775", photo=InputFile(image), caption=text)
             else:
-                bot.send_message(chat_id="1001365520775", text=text)
-        time.sleep(3600)  # Подождите 1 час
+                await bot.send_message(chat_id="1001365520775", text=text)
+        await asyncio.sleep(3600)  # Подождите 1 час
 
 if __name__ == "__main__":
-    publish_random_news()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(publish_random_news())
