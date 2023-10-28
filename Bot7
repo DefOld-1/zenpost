@@ -1,0 +1,88 @@
+import requests
+import random
+import time
+from telegram import Bot, InputFile
+
+TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"  # Замените на свой токен Telegram
+bot = Bot(token=TOKEN)
+
+# URL для запросов к Zen API
+ZEN_URL = "https://dzen.ru/api/v3/launcher/export"
+
+# Каналы для копирования новостей
+channels = ["popsci", "nplus1", "naukatv", "scfh", "uralscience", "nakedscience", "techinsider", "astronews", "hi-news.ru", "deep_cosmos"]
+
+# Список для хранения новостей
+news_list = []
+
+# Функция для получения постов Zen по имени канала
+def get_zen_posts(channel):
+    # Подготовьте параметры запроса
+    params = {
+        "clid": 300,
+        "country_code": "ru",
+        "lang": "ru",
+        "channel_name": channel
+    }
+    # Отправьте запрос и получите ответ
+    response = requests.get(ZEN_URL, params=params)
+    # Проверьте статус ответа
+    if response.status_code == 200:
+        # Преобразуйте ответ в формат JSON
+        data = response.json()
+        # Извлеките список постов из данных
+        posts = data.get("items", [])
+        # Верните список постов
+        return posts
+    else:
+        # В случае ошибки верните пустой список
+        return []
+
+# Функция для форматирования сообщения с постом Zen
+def format_zen_post(post, channel):
+    # Извлеките заголовок, ссылку и изображение из поста
+    title = post.get("title")
+    link = post.get("share_link")
+    text = post.get("text")
+    image = post.get("image")
+    domain_title = post.get("domain_title")
+    # Форматируйте текст сообщения с разметкой Markdown
+    text1 = f"{title} \n\n{text}\n{domain_title}: {link}\n@sci_popular"
+    # Верните текст сообщения и изображение
+    return text1, image
+
+# Функция для получения последних 10 новостей из каждого канала и добавления их в список новостей
+def update_news_list():
+    for channel in channels:
+        posts = get_zen_posts(channel)
+        if posts:
+            latest_posts = posts[:10]  # Получите последние 10 постов
+            for post in latest_posts:
+                if post.get("text"):  # Проверьте, есть ли текст в посте
+                    news_list.append((post, channel))
+
+# Функция для получения случайной новости из списка
+def get_random_news():
+    news_with_text = [(news, channel) for news, channel in news_list if news.get("text")]
+    if news_with_text:
+        news, channel = random.choice(news_with_text)
+        news_list.remove((news, channel))
+        return news, channel
+    else:
+        return None, None
+
+# Функция для публикации случайных новостей
+def publish_random_news():
+    while True:
+        update_news_list()  # Обновите список новостей
+        news, channel = get_random_news()
+        if news and channel:
+            text, image = format_zen_post(news, channel)
+            if image:
+                bot.send_photo(chat_id="YOUR_CHANNEL_ID", photo=InputFile(image), caption=text)
+            else:
+                bot.send_message(chat_id="YOUR_CHANNEL_ID", text=text)
+        time.sleep(3600)  # Подождите 1 час
+
+if __name__ == "__main__":
+    publish_random_news()
